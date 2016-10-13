@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Discord.Audio;
 using Discord.Commands;
@@ -11,18 +10,33 @@ namespace SolidLab.DiscordBot.Sound
     {
         private ISoundsRepository _soundsRepo;
         private readonly AudioService _audioService;
+        private readonly WaveFormat _waveFormat;
 
         public SingleSoundsService(AudioService audioService)
         {
             _audioService = audioService;
+
+            // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+            _waveFormat = new WaveFormat(48000, 16, _audioService.Config.Channels); 
         }
 
         public void SetUpCommands (CommandService cmdService)
         {
             cmdService.CreateCommand("sound")
                 .Parameter("SoundName")
+                .Alias("sd")
                 .Description("Play a sound (If found!)")
-                .Do(async e => await PlaySound(e, e.GetArg("SoundName")));
+                .Do(e => Console.WriteLine("Playing sound"));
+                //.Do(async e => await PlaySound(e, e.GetArg("SoundName")));
+
+            cmdService.CreateGroup("sound", s =>
+            {
+                s.CreateCommand("save")
+                    .Parameter("Sound", ParameterType.Multiple)
+                    //.AddCheck() TODO add check function
+                    .Description("Store a sound with its command for it to be used later on!. Usage: ~sd save {sound} {command} [alias]")
+                    .Do(e => Console.WriteLine("Adding sound"));
+            });
         }
 
         private async Task PlaySound(CommandEventArgs ev, string soundName)
@@ -35,15 +49,19 @@ namespace SolidLab.DiscordBot.Sound
                 return;
             }
 
+            if (IsUrl(soundName))
+            {
+                
+            }
+            
             try
             {
                 var vClient = await _audioService.Join(userVoiceChannel);
-                var OutFormat = new WaveFormat(48000, 16, _audioService.Config.Channels); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
                 using (var MP3Reader = new Mp3FileReader("./TempResources/AIRHORN.mp3")) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
-                using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
+                using (var resampler = new MediaFoundationResampler(MP3Reader, _waveFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
                 {
                     resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                    int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
+                    int blockSize = _waveFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
                     byte[] buffer = new byte[blockSize];
                     int byteCount;
 
@@ -64,11 +82,10 @@ namespace SolidLab.DiscordBot.Sound
                 Console.WriteLine(e);
             }
         }
-    }
 
-    public interface ISoundsRepository
-    {
-        List<string> GetAvailableSounds();
-
+        private bool IsUrl(string soundName)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
