@@ -14,7 +14,7 @@ namespace SolidLab.DiscordBot
 
             var discordRunner = container.Resolve<BotRunner>();
 
-            Task.Run(() => discordRunner.Run());
+            discordRunner.Run();
 
             while (true)
             {

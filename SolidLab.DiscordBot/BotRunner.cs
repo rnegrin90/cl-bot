@@ -21,25 +21,33 @@ namespace SolidLab.DiscordBot
         public Task Run()
         {
             Console.WriteLine("Running");
-
-            _client.UsingCommands(c =>
+            try
             {
-                c.PrefixChar = ConfigurationManager.AppSettings["DiscordBot:Prefix"].ToCharArray()[0];
-                c.HelpMode = HelpMode.Public;
-            });
+                _client.UsingCommands(c =>
+                {
+                    c.PrefixChar = ConfigurationManager.AppSettings["DiscordBot:Prefix"].ToCharArray()[0];
+                    c.HelpMode = HelpMode.Public;
+                });
 
-            _client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
+                _client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
+                {
+                    x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
+                });
+
+                _singleSoundsService = new SingleSoundsService(_client.GetService<AudioService>());
+                var a = new TestSummonService(_client.GetService<AudioService>());
+                var cmdService = _client.GetService<CommandService>();
+
+                a.SetUpCommands(cmdService);
+                _singleSoundsService.SetUpCommands(cmdService);
+
+                return _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
+            }
+            catch (Exception e)
             {
-                x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
-            });
-
-
-            _singleSoundsService = new SingleSoundsService(_client.GetService<AudioService>());
-            var cmdService = _client.GetService<CommandService>();
-
-            _singleSoundsService.SetUpCommands(cmdService);
-
-            return _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
+                Console.WriteLine(e);
+                throw;
+            }
         }
     }
 }
