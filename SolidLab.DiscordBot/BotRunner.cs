@@ -11,7 +11,6 @@ namespace SolidLab.DiscordBot
     public class BotRunner : IRunner
     {
         private readonly DiscordClient _client;
-        private SingleSoundsService _singleSoundsService;
 
         public BotRunner(DiscordClient client)
         {
@@ -34,12 +33,12 @@ namespace SolidLab.DiscordBot
                     x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
                 });
 
-                _singleSoundsService = new SingleSoundsService(_client.GetService<AudioService>());
-                var a = new TestSummonService(_client.GetService<AudioService>());
-                var cmdService = _client.GetService<CommandService>();
+                var simpleSoundService = new SimpleSoundService(_client.GetService<AudioService>());
+                var playlistService = new MusicPlaylistService();
+                var soundHandler = new SoundHandler(simpleSoundService, playlistService);
 
-                a.SetUpCommands(cmdService);
-                _singleSoundsService.SetUpCommands(cmdService);
+                var cmdService = _client.GetService<CommandService>();
+                soundHandler.SetUpCommands(cmdService);
 
                 return _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
             }

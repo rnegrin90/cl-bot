@@ -11,7 +11,7 @@ using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
 {
-    public class SingleSoundsService : IUseCommands
+    public class SimpleSoundService : IMakeSounds
     {
         private ISoundsRepository _soundsRepo;
         private readonly AudioService _audioService;
@@ -19,7 +19,7 @@ namespace SolidLab.DiscordBot.Sound
         private readonly int _blockSize;
         private readonly Queue<CommandQueueElement> _commandQueue;
 
-        public SingleSoundsService(AudioService audioService)
+        public SimpleSoundService(AudioService audioService)
         {
             _audioService = audioService;
             
@@ -29,26 +29,7 @@ namespace SolidLab.DiscordBot.Sound
             _commandQueue = new Queue<CommandQueueElement>();
         }
 
-        public void SetUpCommands (CommandService cmdService)
-        {
-            cmdService.CreateCommand("sound")
-                .Parameter("SoundName")
-                .Alias("sd")
-                .Description("Play a sound (If found!)")
-                //.Do(e => Console.WriteLine("Playing sound"));
-                .Do(async e => await PlaySound(e, e.GetArg("SoundName")));
-
-            cmdService.CreateGroup("sound", s =>
-            {
-                s.CreateCommand("save")
-                    .Parameter("Sound", ParameterType.Multiple)
-                    //.AddCheck() TODO add check function
-                    .Description("Store a sound with its command for it to be used later on!. Usage: ~sd save {sound} {command} [alias]")
-                    .Do(e => Console.WriteLine("Adding sound"));
-            });
-        }
-
-        private async Task PlaySound(CommandEventArgs ev, string soundName)
+        public async Task Play(CommandEventArgs ev, string soundName)
         {
             try
             {

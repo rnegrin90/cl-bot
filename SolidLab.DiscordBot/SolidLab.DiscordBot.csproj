@@ -121,11 +121,14 @@
     <Compile Include="IRunner.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sound\IMakeSounds.cs" />
     <Compile Include="Sound\ISoundsRepository.cs" />
     <Compile Include="IUseCommands.cs" />
-    <Compile Include="Sound\SingleSoundsService.cs" />
+    <Compile Include="Sound\MusicBotMode.cs" />
+    <Compile Include="Sound\MusicPlaylistService.cs" />
+    <Compile Include="Sound\SimpleSoundService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
-    <Compile Include="Sound\TestSummonService.cs" />
+    <Compile Include="Sound\SoundHandler.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
