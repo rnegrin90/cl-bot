@@ -11,13 +11,15 @@ namespace SolidLab.DiscordBot
     public class BotRunner : IRunner
     {
         private readonly DiscordClient _client;
+        private int _returnValue;
 
         public BotRunner(DiscordClient client)
         {
             _client = client;
+            _returnValue = 0;
         }
 
-        public Task Run()
+        public async void Run()
         {
             Console.WriteLine("Running");
             try
@@ -40,7 +42,14 @@ namespace SolidLab.DiscordBot
                 var cmdService = _client.GetService<CommandService>();
                 soundHandler.SetUpCommands(cmdService);
 
-                return _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
+                cmdService.CreateCommand("restart")
+                    .Do(e =>
+                    {
+                        _client.Disconnect();
+                        _returnValue = 1;
+                    });
+
+                await _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
             }
             catch (Exception e)
             {

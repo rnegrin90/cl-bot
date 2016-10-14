@@ -14,7 +14,7 @@ namespace SolidLab.DiscordBot
                 .FromThisAssembly()
                 .Pick()
                 .LifestyleTransient());
-
+            
             container.Register(
                 Component.For<DiscordClient>()
             );
