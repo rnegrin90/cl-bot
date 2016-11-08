@@ -114,9 +114,20 @@
       <HintPath>..\packages\WebSocket4Net.0.14.1\lib\net45\WebSocket4Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="YoutubeExtractor, Version=0.10.11.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\YoutubeExtractor.0.10.11\lib\net35\YoutubeExtractor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotRunner.cs" />
+    <Compile Include="Images\IImageProviderService.cs" />
+    <Compile Include="Images\ImageFile.cs" />
+    <Compile Include="Images\ImageHandler.cs" />
+    <Compile Include="Images\ImageLink.cs" />
+    <Compile Include="Images\ImageProviderService.cs" />
+    <Compile Include="Images\ImageResult.cs" />
+    <Compile Include="Images\ImageResultType.cs" />
     <Compile Include="Installer.cs" />
     <Compile Include="IRunner.cs" />
     <Compile Include="Program.cs" />
@@ -135,6 +146,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DownloadCache\DummyFile.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="TempResources\libsodium.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -145,6 +159,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

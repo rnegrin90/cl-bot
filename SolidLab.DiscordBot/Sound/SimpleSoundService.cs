@@ -8,6 +8,7 @@ using Discord.Audio;
 using Discord.Commands;
 using NAudio.Wave;
 using SolidLab.DiscordBot.Sound.Models;
+using YoutubeExtractor;
 
 namespace SolidLab.DiscordBot.Sound
 {
@@ -49,6 +50,9 @@ namespace SolidLab.DiscordBot.Sound
                     case SoundRequestType.Mp3File:
                         audioStream = ProcessMp3File(soundName);
                         break;
+                    case SoundRequestType.Youtube:
+                        audioStream = ProcessYoutube(soundName);
+                        break;
                 }
 
                 var byteBuffer = DiscordEncode(audioStream);
@@ -59,6 +63,29 @@ namespace SolidLab.DiscordBot.Sound
                 Console.WriteLine(e);
                 throw;
             }
+        }
+
+        private Stream ProcessYoutube(string soundName)
+        {
+            IEnumerable<VideoInfo> videoInfos = DownloadUrlResolver.GetDownloadUrls(soundName);
+
+            VideoInfo video = videoInfos
+                //.Where(info => info.CanExtractAudio)
+                .OrderByDescending(info => info.AudioBitrate)
+                .First();
+
+            if (video.RequiresDecryption)
+            {
+                DownloadUrlResolver.DecryptDownloadUrl(video);
+            }
+
+            var fileName = video.Title + video.AudioExtension;
+
+            var audioDownloader = new AudioDownloader(video, Path.Combine("./DownloadCache", video.Title + video.AudioExtension));
+            
+            audioDownloader.Execute();
+
+            return ProcessMp3File(fileName);
         }
 
         private Stream ProcessMp3File(string soundName)
@@ -114,6 +141,10 @@ namespace SolidLab.DiscordBot.Sound
 
         private SoundRequestType GetSoundType(string soundName)
         {
+            if (soundName.Contains("youtube"))
+            {
+                return SoundRequestType.Youtube;
+            }
             return SoundRequestType.Mp3File;
         }
     }
