@@ -121,6 +121,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotRunner.cs" />
+    <Compile Include="Chat\ChatHandler.cs" />
     <Compile Include="Images\IImageProviderService.cs" />
     <Compile Include="Images\ImageFile.cs" />
     <Compile Include="Images\ImageHandler.cs" />

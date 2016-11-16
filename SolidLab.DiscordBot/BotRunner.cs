@@ -5,6 +5,7 @@ using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using SolidLab.DiscordBot.Sound;
+using SolidLab.DiscordBot.Functions;
 
 namespace SolidLab.DiscordBot
 {
@@ -38,10 +39,10 @@ namespace SolidLab.DiscordBot
                 var simpleSoundService = new SimpleSoundService(_client.GetService<AudioService>());
                 var playlistService = new MusicPlaylistService();
                 var soundHandler = new SoundHandler(simpleSoundService, playlistService);
-
+                var chatHandler = new ChatHandler();
                 var cmdService = _client.GetService<CommandService>();
                 soundHandler.SetUpCommands(cmdService);
-
+                chatHandler.SetUpCommands(cmdService);
                 cmdService.CreateCommand("restart")
                     .Do(e =>
                     {
