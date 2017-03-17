@@ -121,6 +121,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotRunner.cs" />
+    <Compile Include="Events\EventService.cs" />
+    <Compile Include="Events\IHandleEvents.cs" />
     <Compile Include="Images\IImageProviderService.cs" />
     <Compile Include="Images\ImageFile.cs" />
     <Compile Include="Images\ImageHandler.cs" />
@@ -140,6 +142,8 @@
     <Compile Include="Sound\SimpleSoundService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
     <Compile Include="Sound\SoundHandler.cs" />
+    <Compile Include="Sound\Models\UserGreeting.cs" />
+    <Compile Include="Sound\SoundsRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -1,5 +1,6 @@
 ﻿using System;
 using Discord.Commands;
+using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
 {
@@ -48,7 +49,11 @@ namespace SolidLab.DiscordBot.Sound
                 .Parameter("SoundName")
                 .Alias("sd")
                 .Description("Play a sound (If found!)")
-                .Do(e => _activeSoundService.Play(e, e.GetArg("SoundName")));
+                .Do(e =>
+                {
+                    var soundName = e.GetArg("SoundName");
+                    _activeSoundService.Play(e.User.VoiceChannel, e.User, soundName, DetectSoundType(soundName));
+                });
 
             cmdService.CreateCommand("pause")
                 .Description("Pauses music")
@@ -82,6 +87,15 @@ namespace SolidLab.DiscordBot.Sound
                     _botMode = mode;
                     break;
             }
+        }
+        
+        private SoundRequestType DetectSoundType(string soundName)
+        {
+            if (soundName.Contains("youtube"))
+            {
+                return SoundRequestType.Youtube;
+            }
+            return SoundRequestType.Mp3File;
         }
     }
 }

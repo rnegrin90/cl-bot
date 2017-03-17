@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
+using SolidLab.DiscordBot.Events;
 using SolidLab.DiscordBot.Sound;
 
 namespace SolidLab.DiscordBot
@@ -35,8 +36,10 @@ namespace SolidLab.DiscordBot
                     x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
                 });
 
+                // TODO DI!!!
                 var simpleSoundService = new SimpleSoundService(_client.GetService<AudioService>());
                 var playlistService = new MusicPlaylistService();
+                var eventService = new EventService(new SoundsRepository(), simpleSoundService);
                 var soundHandler = new SoundHandler(simpleSoundService, playlistService);
 
                 var cmdService = _client.GetService<CommandService>();
@@ -49,7 +52,11 @@ namespace SolidLab.DiscordBot
                         _returnValue = 1;
                     });
 
-                await _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
+                _client.UserUpdated += eventService.EventGenerated;
+                
+                await _client
+                    .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)
+                    .ConfigureAwait(false);
             }
             catch (Exception e)
             {

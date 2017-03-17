@@ -30,33 +30,30 @@ namespace SolidLab.DiscordBot.Sound
             _commandQueue = new Queue<CommandQueueElement>();
         }
 
-        public async Task Play(CommandEventArgs ev, string soundName)
+        public async Task Play(Channel channel, User user, object sound, SoundRequestType type, bool returnToChannel = false)
         {
             try
             {
-                var userVoiceChannel = ev.User.VoiceChannel;
-
-                if (userVoiceChannel == null)
+                // TODO move this out
+                if (channel == null)
                 {
-                    await ev.Channel.SendMessage("You must be in a voice channel to use this command!");
+                    await channel.SendMessage("You must be in a voice channel to use this command!");
                     return;
                 }
 
-                var soundType = GetSoundType(soundName);
-
                 Stream audioStream = null;
-                switch (soundType)
+                switch (type)
                 {
                     case SoundRequestType.Mp3File:
-                        audioStream = ProcessMp3File(soundName);
+                        audioStream = ProcessMp3File((string) sound);
                         break;
                     case SoundRequestType.Youtube:
-                        audioStream = ProcessYoutube(soundName);
+                        audioStream = ProcessYoutube((string) sound);
                         break;
                 }
 
                 var byteBuffer = DiscordEncode(audioStream);
-                await SendEncoded(userVoiceChannel, byteBuffer);
+                SendEncoded(channel, byteBuffer);
             }
             catch (Exception e)
             {
@@ -120,7 +117,7 @@ namespace SolidLab.DiscordBot.Sound
             }
         }
 
-        private async Task SendEncoded(Channel userVoiceChannel, IEnumerable<byte[]> buffer)
+        private async void SendEncoded(Channel userVoiceChannel, IEnumerable<byte[]> buffer)
         {
             try
             {
