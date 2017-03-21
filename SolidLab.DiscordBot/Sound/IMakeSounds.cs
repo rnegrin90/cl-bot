@@ -6,6 +6,11 @@ namespace SolidLab.DiscordBot.Sound
 {
     public interface IMakeSounds
     {
-        Task Play(Channel channel, User user, object sound, SoundRequestType type, bool returnToChannel = false);
+        Task Play(Channel channel, User user, object sound, SoundRequestType type);
+        Task Pause(Channel channel);
+        Task Resume(Channel channel);
+        Task Join(Channel channel);
+        Task Disconnect();
+        Channel GetCurrentChannel();
     }
 }

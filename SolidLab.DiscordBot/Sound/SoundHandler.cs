@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Discord.Commands;
 using SolidLab.DiscordBot.Sound.Models;
 
@@ -6,59 +8,54 @@ namespace SolidLab.DiscordBot.Sound
 {
     public class SoundHandler : IUseCommands
     {
-        private MusicBotMode _botMode;
-        private IMakeSounds _activeSoundService;
-        private readonly SimpleSoundService _simpleSoundService;
-        private readonly MusicPlaylistService _playlistService;
+        private readonly IMakeSounds _soundService;
 
-        public SoundHandler(SimpleSoundService simpleSoundService, MusicPlaylistService playlistService)
+        public SoundHandler(IMakeSounds soundService)
         {
-            _simpleSoundService = simpleSoundService;
-            _playlistService = playlistService;
-
-            _botMode = MusicBotMode.Meme;
-            _activeSoundService = _simpleSoundService;
+            _soundService = soundService;
         }
 
         public void SetUpCommands(CommandService cmdService)
         {
-            cmdService.CreateCommand("audiomode")
-                .Description("Changes the mode the bot plays music/sounds")
-                .Do(e => e.Channel.SendMessage(PrintBotMode()));
-
-            cmdService.CreateGroup("audiomode", c =>
-            {
-                c.CreateCommand("meme")
-                    .Description("The bot will play meme sounds (max 15sec), will move between channels to play sounds, will be idle by default, will not notify of what is being played")
-                    .Do(e =>
-                    {
-                        SetBotMode(MusicBotMode.Meme);
-                        e.Channel.SendMessage("Meme mode activated");
-                    });
-
-                c.CreateCommand("music")
-                    .Description("The bot will play music (10 min max), it will not move to other channel unless explitly told to do so, will play default music, will notify of what is being played.")
-                    .Do(e =>
-                    {
-                        SetBotMode(MusicBotMode.Music);
-                        e.Channel.SendMessage("Music mode activated");
-                    });
-            });
-
             cmdService.CreateCommand("play")
                 .Parameter("SoundName")
                 .Alias("sd")
                 .Description("Play a sound (If found!)")
-                .Do(e =>
-                {
-                    var soundName = e.GetArg("SoundName");
-                    _activeSoundService.Play(e.User.VoiceChannel, e.User, soundName, DetectSoundType(soundName));
-                });
+                .Do(async e => await ProcessPlayEvent(e));
 
             cmdService.CreateCommand("pause")
                 .Description("Pauses music")
-                .AddCheck((c, u, a) => _botMode == MusicBotMode.Music)
-                .Do(e => _playlistService.Pause(e));
+                .Do(e => _soundService.Pause(e.Channel));
+            
+            cmdService.CreateCommand("resume")
+                .Description("Resumes music")
+                .Do(e => _soundService.Resume(e.Channel));
+            
+            cmdService.CreateCommand("join")
+                .Parameter("ChannelName", ParameterType.Multiple)
+                .Description("Joins user current voice channel")
+                .Do(async e =>
+                {
+                    if (e.Args.Length > 0)
+                    {
+                        var channelName = string.Join(" ", e.Args);
+                        var channel = e.Server.VoiceChannels.FirstOrDefault(c => c.Name == channelName);
+                        if (channel != null)
+                            await _soundService.Join(channel);
+                        else
+                            await e.Channel.SendMessage("Channel not found");
+                    }
+                    if (e.User.VoiceChannel == null)
+                        await e.Channel.SendMessage("You need to specify a channel for me to join!");
+                    await _soundService.Join(e.User.VoiceChannel);
+                });
+
+            cmdService.CreateCommand("disconnect")
+                .Description("Leaves the current voice channel")
+                .Do(async e =>
+                {
+                    await _soundService.Disconnect();
+                });
 
             cmdService.CreateGroup("sound", s =>
             {
@@ -70,25 +67,15 @@ namespace SolidLab.DiscordBot.Sound
             });
         }
 
-        public string PrintBotMode()
+        public async Task ProcessPlayEvent(CommandEventArgs ev)
         {
-            return $"The bot is in {_botMode}";
+            if (ev.User.VoiceChannel.Id == _soundService.GetCurrentChannel()?.Id)
+                await ev.Channel.SendMessage("You must be in a voice channel to use this command!");
+
+            var soundName = ev.GetArg("SoundName");
+            await _soundService.Play(ev.User.VoiceChannel, ev.User, soundName, DetectSoundType(soundName));
         }
 
-        public void SetBotMode(MusicBotMode mode)
-        {
-            switch (mode)
-            {
-                case MusicBotMode.Meme:
-                    _botMode = mode;
-                    _activeSoundService = _simpleSoundService;
-                    break;
-                case MusicBotMode.Music:
-                    _botMode = mode;
-                    break;
-            }
-        }
-        
         private SoundRequestType DetectSoundType(string soundName)
         {
             if (soundName.Contains("youtube"))

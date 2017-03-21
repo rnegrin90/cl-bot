@@ -12,7 +12,7 @@ namespace SolidLab.DiscordBot
             var container = new WindsorContainer();
             container.Install(FromAssembly.This());
 
-            var discordRunner = container.Resolve<BotRunner>();
+            var discordRunner = container.Resolve<IRunner>();
 
             discordRunner.Run();
 

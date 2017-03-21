@@ -1,23 +1,31 @@
 ﻿using System;
 using System.Configuration;
-using System.Threading.Tasks;
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using SolidLab.DiscordBot.Events;
 using SolidLab.DiscordBot.Sound;
-using SolidLab.DiscordBot.Functions;
 
 namespace SolidLab.DiscordBot
 {
     public class BotRunner : IRunner
     {
         private readonly DiscordClient _client;
+        private readonly IUseCommands _soundHandler;
+        private readonly IUseCommands _chatHandler;
+        private readonly IHandleEvents _userEventHandler;
         private int _returnValue;
 
-        public BotRunner(DiscordClient client)
+        public BotRunner(
+            DiscordClient client, 
+            IUseCommands soundHandler, 
+            IUseCommands chatHandler, 
+            IHandleEvents userEventHandler)
         {
             _client = client;
+            _soundHandler = soundHandler;
+            _chatHandler = chatHandler;
+            _userEventHandler = userEventHandler;
             _returnValue = 0;
         }
 
@@ -32,20 +40,14 @@ namespace SolidLab.DiscordBot
                     c.HelpMode = HelpMode.Public;
                 });
 
-                _client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
-                {
-                    x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
-                });
-
-                // TODO DI!!!
-                var simpleSoundService = new SimpleSoundService(_client.GetService<AudioService>());
-                var playlistService = new MusicPlaylistService();
-                var eventService = new EventService(new SoundsRepository(), simpleSoundService);
-                var soundHandler = new SoundHandler(simpleSoundService, playlistService);
-                var chatHandler = new ChatHandler();
+                //_client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
+                //{
+                //    x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
+                //});
+                
                 var cmdService = _client.GetService<CommandService>();
-                soundHandler.SetUpCommands(cmdService);
-                chatHandler.SetUpCommands(cmdService);
+                _soundHandler.SetUpCommands(cmdService);
+                _chatHandler.SetUpCommands(cmdService);
                 cmdService.CreateCommand("restart")
                     .Do(e =>
                     {
@@ -53,7 +55,7 @@ namespace SolidLab.DiscordBot
                         _returnValue = 1;
                     });
 
-                _client.UserUpdated += eventService.EventGenerated;
+                _client.UserUpdated += _userEventHandler.EventGenerated;
                 
                 await _client
                     .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)

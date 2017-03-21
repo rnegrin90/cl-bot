@@ -1,5 +1,4 @@
 using Discord;
-using Discord.Commands;
 using SolidLab.DiscordBot.Sound;
 using SolidLab.DiscordBot.Sound.Models;
 
@@ -18,8 +17,8 @@ namespace SolidLab.DiscordBot.Events
 
         public void EventGenerated(object obj, UserUpdatedEventArgs ev)
         {
-            if (ev.After.VoiceChannel != null)
-                _soundService.Play(ev.After.VoiceChannel, ev.After, "AIRHORN", SoundRequestType.Mp3File);
+            //if (ev.After.VoiceChannel != null)
+            //    _soundService.Play(ev.After.VoiceChannel, ev.After, "AIRHORN", SoundRequestType.Mp3File);
             //_soundsRepository.GetPersonalisedUserGreeting(ev.User.Id);
             //if (_soundsRepository.GetPersonalisedUserGreeting(ev.User.Id) != null)
             //    _soundService.Play(, "");
