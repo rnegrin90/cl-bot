@@ -136,14 +136,17 @@
     <Compile Include="Sound\IMakeSounds.cs" />
     <Compile Include="Sound\ISoundsRepository.cs" />
     <Compile Include="IUseCommands.cs" />
-    <Compile Include="Sound\MusicBotMode.cs" />
+    <Compile Include="Sound\IYoutubeDownloader.cs" />
     <Compile Include="Sound\Models\PlayerStatus.cs" />
+    <Compile Include="Sound\Models\PlayerSettings.cs" />
     <Compile Include="Sound\SoundService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
     <Compile Include="Sound\SoundHandler.cs" />
     <Compile Include="Sound\Models\UserGreeting.cs" />
     <Compile Include="Sound\Models\SoundQuality.cs" />
     <Compile Include="Sound\SoundsRepository.cs" />
+    <Compile Include="Sound\Models\YoutubeData.cs" />
+    <Compile Include="Sound\YoutubeDownloader.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -165,6 +168,10 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(ProjectDir)TempResources\opus.dll  $(ProjectDir)$(OutDir)
+copy $(ProjectDir)TempResources\libsodium.dll  $(ProjectDir)$(OutDir)</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -41,9 +41,14 @@ namespace SolidLab.DiscordBot.Sound
                         var channelName = string.Join(" ", e.Args);
                         var channel = e.Server.VoiceChannels.FirstOrDefault(c => c.Name == channelName);
                         if (channel != null)
+                        {
                             await _soundService.Join(channel);
+                        }
                         else
+                        {
                             await e.Channel.SendMessage("Channel not found");
+                            return;
+                        }
                     }
                     if (e.User.VoiceChannel == null)
                         await e.Channel.SendMessage("You need to specify a channel for me to join!");
@@ -69,7 +74,7 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task ProcessPlayEvent(CommandEventArgs ev)
         {
-            if (ev.User.VoiceChannel.Id == _soundService.GetCurrentChannel()?.Id)
+            if (ev.User.VoiceChannel.Id != _soundService.GetCurrentChannel()?.Id)
                 await ev.Channel.SendMessage("You must be in a voice channel to use this command!");
 
             var soundName = ev.GetArg("SoundName");
@@ -78,7 +83,7 @@ namespace SolidLab.DiscordBot.Sound
 
         private SoundRequestType DetectSoundType(string soundName)
         {
-            if (soundName.Contains("youtube"))
+            if (soundName.Contains("youtube")) // TODO improve this
             {
                 return SoundRequestType.Youtube;
             }

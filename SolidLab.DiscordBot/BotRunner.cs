@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Configuration;
 using Discord;
-using Discord.Audio;
 using Discord.Commands;
 using SolidLab.DiscordBot.Events;
-using SolidLab.DiscordBot.Sound;
 
 namespace SolidLab.DiscordBot
 {
@@ -39,11 +37,6 @@ namespace SolidLab.DiscordBot
                     c.PrefixChar = ConfigurationManager.AppSettings["DiscordBot:Prefix"].ToCharArray()[0];
                     c.HelpMode = HelpMode.Public;
                 });
-
-                //_client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
-                //{
-                //    x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
-                //});
                 
                 var cmdService = _client.GetService<CommandService>();
                 _soundHandler.SetUpCommands(cmdService);

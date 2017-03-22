@@ -29,10 +29,14 @@ namespace SolidLab.DiscordBot
 
             container.Register(
                 Component
+                    .For<IYoutubeDownloader>()
+                    .ImplementedBy<YoutubeDownloader>()
+                    .DependsOn(Dependency.OnValue("soundQuality", ConfigurationManager.AppSettings.Get("YoutubeDownloader:SoundQuality")))
+                    .DependsOn(Dependency.OnValue("soundCache", ConfigurationManager.AppSettings.Get("YoutubeDownloader:CacheFolder"))),
+
+                Component
                     .For<IMakeSounds>()
-                    .ImplementedBy<SoundService>()
-                    .DependsOn(Dependency.OnValue("cacheFolderPath",ConfigurationManager.AppSettings.Get("SoundService:CacheFolder")))
-                    .DependsOn(Dependency.OnValue("soundQuality", ConfigurationManager.AppSettings.Get("SoundService:SoundQuality"))),
+                    .ImplementedBy<SoundService>(),
                 
                 Component
                     .For<ISoundsRepository>()
