@@ -20,7 +20,7 @@ namespace SolidLab.DiscordBot.Sound
         private readonly PlayerSettings _settings;
         private readonly PlayerStatus _playerStatus;
         private readonly Queue<CommandQueueElement> _commandQueue;
-
+        
         public SoundService(DiscordClient discordClient, IYoutubeDownloader youtubeDownloader)
         {
             _youtubeDownloader = youtubeDownloader;

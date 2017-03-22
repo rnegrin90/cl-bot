@@ -58,7 +58,8 @@ namespace SolidLab.DiscordBot.Sound
                 FileStream = await ConvertToMp3(_soundCache, video.Title, video.VideoExtension),
                 Link = link,
                 Mp4Path = Path.Combine(_soundCache, video.Title + video.VideoExtension),
-                Mp3Path = Path.Combine(_soundCache, video.Title + ".mp3")
+                Mp3Path = Path.Combine(_soundCache, video.Title + ".mp3"),
+                SongTitle = video.Title
             };
         }
 
