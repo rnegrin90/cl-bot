@@ -9,7 +9,7 @@ using YoutubeExtractor;
 
 namespace SolidLab.DiscordBot.Sound
 {
-    public class YoutubeDownloader : IYoutubeDownloader
+    public class YoutubeDownloader : IDownloadAudio
     {
         private readonly SoundQuality _soundQuality;
         private readonly string _soundCache;
@@ -20,7 +20,7 @@ namespace SolidLab.DiscordBot.Sound
             _soundCache = soundCache;
         }
 
-        public async Task<YoutubeData> GetAudioStream(string link)
+        public async Task<AudioItem> GetAudioStream(string link)
         {
             var videoInfos = DownloadUrlResolver
                 .GetDownloadUrls(link)
@@ -53,7 +53,7 @@ namespace SolidLab.DiscordBot.Sound
 
             downloader.Execute();
 
-            return new YoutubeData
+            return new AudioItem
             {
                 FileStream = await ConvertToMp3(_soundCache, video.Title, video.VideoExtension),
                 Link = link,

@@ -29,14 +29,23 @@ namespace SolidLab.DiscordBot
 
             container.Register(
                 Component
-                    .For<IYoutubeDownloader>()
+                    .For<IDownloadAudio>()
                     .ImplementedBy<YoutubeDownloader>()
+                    .Named("YoutubeDownloader")
                     .DependsOn(Dependency.OnValue("soundQuality", ConfigurationManager.AppSettings.Get("YoutubeDownloader:SoundQuality")))
                     .DependsOn(Dependency.OnValue("soundCache", ConfigurationManager.AppSettings.Get("YoutubeDownloader:CacheFolder"))),
 
                 Component
+                    .For<IDownloadAudio>()
+                    .ImplementedBy<Mp3Downloader>()
+                    .Named("Mp3Downloader")
+                    .DependsOn(Dependency.OnValue("soundCache", ConfigurationManager.AppSettings.Get("YoutubeDownloader:CacheFolder"))),
+
+                Component
                     .For<IMakeSounds>()
-                    .ImplementedBy<SoundService>(),
+                    .ImplementedBy<SoundService>()
+                    .DependsOn(Dependency.OnComponent("youtubeDownloader", "YoutubeDownloader"))
+                    .DependsOn(Dependency.OnComponent("mp3Downloader", "Mp3Downloader")),
                 
                 Component
                     .For<ISoundsRepository>()
@@ -44,7 +53,13 @@ namespace SolidLab.DiscordBot
 
                 Component
                     .For<IHandleEvents>()
-                    .ImplementedBy<EventService>(),
+                    .ImplementedBy<EventService>()
+                    .Named("EventService"),
+
+                Component
+                    .For<IHandleEvents>()
+                    .ImplementedBy<MessageEventService>()
+                    .Named("MessageEventService"),
 
                 Component
                     .For<IUseCommands>()
@@ -61,6 +76,8 @@ namespace SolidLab.DiscordBot
                     .ImplementedBy<BotRunner>()
                     .DependsOn(Dependency.OnComponent("soundHandler", "SoundHandler"))
                     .DependsOn(Dependency.OnComponent("chatHandler", "ChatHandler"))
+                    .DependsOn(Dependency.OnComponent("userEventHandler", "EventService"))
+                    .DependsOn(Dependency.OnComponent("chatEventHandler", "MessageEventService"))
             );
 
             container.Register(

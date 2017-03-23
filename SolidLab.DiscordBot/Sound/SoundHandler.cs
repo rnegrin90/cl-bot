@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using Discord.Commands;
 using SolidLab.DiscordBot.Sound.Models;
@@ -83,11 +84,23 @@ namespace SolidLab.DiscordBot.Sound
 
         private SoundRequestType DetectSoundType(string soundName)
         {
-            if (soundName.Contains("youtube")) // TODO improve this
+            Uri uriResult;
+            if (Uri.TryCreate(soundName, UriKind.Absolute, out uriResult) &&
+                (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps))
             {
-                return SoundRequestType.Youtube;
+                var youtubeDomains = new[] {"www.youtube.com", "m.youtube.com", "youtu.be", "m.youtu.be"};
+                if (youtubeDomains.Any(d => d.Contains(uriResult.Host)))
+                    return SoundRequestType.Youtube;
+
+                var soundcloudDomains = new[] {"www.soundcloud.com", "soundcloud.com", "m.soundcloud.com"};
+                if (soundcloudDomains.Any(d => d.Contains(uriResult.Host)))
+                    return SoundRequestType.Soundcloud;
+
+                var fileExtensionsAccepted = new[] {".mp3"};
+                if (fileExtensionsAccepted.Any(e => uriResult.PathAndQuery.Contains(e)))
+                    return SoundRequestType.LinkMp3;
             }
-            return SoundRequestType.Mp3File;
+            return SoundRequestType.SearchString;
         }
     }
 }

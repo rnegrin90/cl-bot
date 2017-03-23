@@ -10,10 +10,9 @@ namespace SolidLab.DiscordBot.Sound
     {
         private readonly CloudBlobClient _blobClient;
 
-        public BlobManager(string connString)
+        public BlobManager(CloudStorageAccount storageAccount)
         {
-            var account = CloudStorageAccount.Parse(connString);
-            _blobClient = account.CreateCloudBlobClient();
+            _blobClient = storageAccount.CreateCloudBlobClient();
         }
 
         public async Task StoreBlob(Guid blobId, BlobType type, Stream payload)
@@ -42,6 +41,7 @@ namespace SolidLab.DiscordBot.Sound
 
     public interface IManageBlob
     {
-        
+        Task StoreBlob(Guid blobId, BlobType type, Stream payload);
+        Task<Stream> GetBlob(Guid blobId, BlobType type);
     }
 }

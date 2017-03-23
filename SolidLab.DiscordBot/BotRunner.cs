@@ -12,18 +12,21 @@ namespace SolidLab.DiscordBot
         private readonly IUseCommands _soundHandler;
         private readonly IUseCommands _chatHandler;
         private readonly IHandleEvents _userEventHandler;
+        private readonly IHandleEvents _chatEventHandler;
         private int _returnValue;
 
         public BotRunner(
             DiscordClient client, 
             IUseCommands soundHandler, 
             IUseCommands chatHandler, 
-            IHandleEvents userEventHandler)
+            IHandleEvents userEventHandler, 
+            IHandleEvents chatEventHandler)
         {
             _client = client;
             _soundHandler = soundHandler;
             _chatHandler = chatHandler;
             _userEventHandler = userEventHandler;
+            _chatEventHandler = chatEventHandler;
             _returnValue = 0;
         }
 
@@ -49,6 +52,7 @@ namespace SolidLab.DiscordBot
                     });
 
                 _client.UserUpdated += _userEventHandler.EventGenerated;
+                _client.MessageReceived += _chatEventHandler.EventGenerated;
                 
                 await _client
                     .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)

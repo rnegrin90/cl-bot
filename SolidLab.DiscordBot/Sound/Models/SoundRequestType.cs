@@ -6,6 +6,7 @@ namespace SolidLab.DiscordBot.Sound.Models
         Soundcloud = 2,
         Mp3File = 3,
         StoredMp3 = 4,
-        LinkMp3 = 5
+        LinkMp3 = 5,
+        SearchString = 6
     }
 }

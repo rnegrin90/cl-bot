@@ -122,6 +122,7 @@
     <Compile Include="Chat\ChatHandler.cs" />
     <Compile Include="Events\EventService.cs" />
     <Compile Include="Events\IHandleEvents.cs" />
+    <Compile Include="Events\MessageEventService.cs" />
     <Compile Include="Images\IImageProviderService.cs" />
     <Compile Include="Images\ImageFile.cs" />
     <Compile Include="Images\ImageHandler.cs" />
@@ -137,16 +138,17 @@
     <Compile Include="Sound\IMakeSounds.cs" />
     <Compile Include="Sound\ISoundsRepository.cs" />
     <Compile Include="IUseCommands.cs" />
-    <Compile Include="Sound\IYoutubeDownloader.cs" />
+    <Compile Include="Sound\IDownloadAudio.cs" />
     <Compile Include="Sound\Models\PlayerStatus.cs" />
     <Compile Include="Sound\Models\PlayerSettings.cs" />
+    <Compile Include="Sound\Mp3Downloader.cs" />
     <Compile Include="Sound\SoundService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
     <Compile Include="Sound\SoundHandler.cs" />
     <Compile Include="Sound\Models\UserGreeting.cs" />
     <Compile Include="Sound\Models\SoundQuality.cs" />
     <Compile Include="Sound\SoundsRepository.cs" />
-    <Compile Include="Sound\Models\YoutubeData.cs" />
+    <Compile Include="Sound\Models\AudioItem.cs" />
     <Compile Include="Sound\YoutubeDownloader.cs" />
   </ItemGroup>
   <ItemGroup>

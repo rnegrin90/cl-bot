@@ -1,6 +1,6 @@
+using System;
 using Discord;
 using SolidLab.DiscordBot.Sound;
-using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Events
 {
@@ -15,8 +15,9 @@ namespace SolidLab.DiscordBot.Events
             _soundService = soundService;
         }
 
-        public void EventGenerated(object obj, UserUpdatedEventArgs ev)
+        public void EventGenerated(object obj, EventArgs ev)
         {
+            var discordEvent = (UserUpdatedEventArgs) ev;
             //if (ev.After.VoiceChannel != null)
             //    _soundService.Play(ev.After.VoiceChannel, ev.After, "AIRHORN", SoundRequestType.Mp3File);
             //_soundsRepository.GetPersonalisedUserGreeting(ev.User.Id);

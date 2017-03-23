@@ -3,8 +3,8 @@ using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
 {
-    public interface IYoutubeDownloader
+    public interface IDownloadAudio
     {
-        Task<YoutubeData> GetAudioStream(string link);
+        Task<AudioItem> GetAudioStream(string link);
     }
 }

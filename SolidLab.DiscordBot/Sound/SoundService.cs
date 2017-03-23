@@ -13,7 +13,8 @@ namespace SolidLab.DiscordBot.Sound
 {
     public class SoundService : IMakeSounds
     {
-        private readonly IYoutubeDownloader _youtubeDownloader;
+        private readonly IDownloadAudio _youtubeDownloader;
+        private readonly IDownloadAudio _mp3Downloader;
         private readonly ISoundsRepository _soundsRepo;
         private IAudioClient _audioClient;
         private readonly AudioService _audioService;
@@ -21,9 +22,13 @@ namespace SolidLab.DiscordBot.Sound
         private readonly PlayerStatus _playerStatus;
         private readonly Queue<CommandQueueElement> _commandQueue;
         
-        public SoundService(DiscordClient discordClient, IYoutubeDownloader youtubeDownloader)
+        public SoundService(
+            DiscordClient discordClient, 
+            IDownloadAudio youtubeDownloader,
+            IDownloadAudio mp3Downloader)
         {
             _youtubeDownloader = youtubeDownloader;
+            _mp3Downloader = mp3Downloader;
             _playerStatus = new PlayerStatus
             {
                 Status = InternalStatus.Starting,
@@ -62,23 +67,23 @@ namespace SolidLab.DiscordBot.Sound
             {
                 _playerStatus.Status = InternalStatus.Playing;
 
-                Stream audioStream = null;
+                IDownloadAudio selectedDownloader = null;
                 switch (type)
                 {
-                    case SoundRequestType.Mp3File:
-                        audioStream = await ProcessMp3File((string) sound);
+                    case SoundRequestType.LinkMp3:
+                        selectedDownloader = _mp3Downloader;
                         break;
                     case SoundRequestType.Youtube:
-                        audioStream = (await _youtubeDownloader
-                                .GetAudioStream((string)sound)
-                                .ConfigureAwait(false))
-                            .FileStream;
+                        selectedDownloader = _youtubeDownloader;
                         break;
                 }
 
-                var byteBuffer = DiscordEncode(audioStream);
-                await SendEncoded(byteBuffer, _playerStatus);
-                
+                if (selectedDownloader != null)
+                {
+                    var byteBuffer = DiscordEncode((await selectedDownloader.GetAudioStream((string)sound).ConfigureAwait(false)).FileStream); // TODO I think it will always be a string
+                    await SendEncoded(byteBuffer, _playerStatus);
+                }
+
                 _playerStatus.Status = InternalStatus.Idle;
             }
             catch (Exception e)
