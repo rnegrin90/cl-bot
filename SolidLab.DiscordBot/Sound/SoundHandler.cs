@@ -19,7 +19,7 @@ namespace SolidLab.DiscordBot.Sound
         public void SetUpCommands(CommandService cmdService)
         {
             cmdService.CreateCommand("play")
-                .Parameter("SoundName")
+                .Parameter("SoundName", ParameterType.Multiple)
                 .Alias("sd")
                 .Description("Play a sound (If found!)")
                 .Do(async e => await ProcessPlayEvent(e));
@@ -79,6 +79,7 @@ namespace SolidLab.DiscordBot.Sound
                 await ev.Channel.SendMessage("You must be in a voice channel to use this command!");
 
             var soundName = ev.GetArg("SoundName");
+            
             await _soundService.Play(ev.User.VoiceChannel, ev.User, soundName, DetectSoundType(soundName));
         }
 

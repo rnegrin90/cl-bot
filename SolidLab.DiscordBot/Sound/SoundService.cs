@@ -80,7 +80,9 @@ namespace SolidLab.DiscordBot.Sound
 
                 if (selectedDownloader != null)
                 {
-                    var byteBuffer = DiscordEncode((await selectedDownloader.GetAudioStream((string)sound).ConfigureAwait(false)).FileStream); // TODO I think it will always be a string
+                    var audioData = await selectedDownloader.GetAudioStream((string)sound).ConfigureAwait(false);
+
+                    var byteBuffer = DiscordEncode(audioData.FileStream); // TODO I think it will always be a string
                     await SendEncoded(byteBuffer, _playerStatus);
                 }
 
