@@ -4,6 +4,7 @@ using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
 using Discord;
 using Discord.Audio;
+using Microsoft.WindowsAzure.Storage;
 using SolidLab.DiscordBot.Chat;
 using SolidLab.DiscordBot.Events;
 using SolidLab.DiscordBot.Sound;
@@ -47,6 +48,10 @@ namespace SolidLab.DiscordBot
                     .DependsOn(Dependency.OnComponent("youtubeDownloader", "YoutubeDownloader"))
                     .DependsOn(Dependency.OnComponent("mp3Downloader", "Mp3Downloader")),
                 
+                Component
+                    .For<CloudStorageAccount>()
+                    .UsingFactoryMethod(() => CloudStorageAccount.Parse(ConfigurationManager.AppSettings.Get("BlobStorage:ConnectionString"))),
+
                 Component
                     .For<ISoundsRepository>()
                     .ImplementedBy<SoundsRepository>(),

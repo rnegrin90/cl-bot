@@ -49,17 +49,23 @@ namespace SolidLab.DiscordBot.Sound
                 DownloadUrlResolver.DecryptDownloadUrl(video);
             }
 
-            var downloader = new VideoDownloader(video, Path.Combine(_soundCache, video.Title + video.VideoExtension));
+            var fileName = video.Title;
+            foreach (var invalidFileNameChar in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(invalidFileNameChar.ToString(), "");
+            }
+
+            var downloader = new VideoDownloader(video, Path.Combine(_soundCache, fileName + video.VideoExtension));
 
             downloader.Execute();
 
             return new AudioItem
             {
-                FileStream = await ConvertToMp3(_soundCache, video.Title, video.VideoExtension),
+                FileStream = await ConvertToMp3(_soundCache, fileName, video.VideoExtension),
                 Link = link,
-                Mp4Path = Path.Combine(_soundCache, video.Title + video.VideoExtension),
-                Mp3Path = Path.Combine(_soundCache, video.Title + ".mp3"),
-                SongTitle = video.Title
+                Mp4Path = Path.Combine(_soundCache, fileName + video.VideoExtension),
+                Mp3Path = Path.Combine(_soundCache, fileName + ".mp3"),
+                SongTitle = video.Title 
             };
         }
 

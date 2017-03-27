@@ -65,8 +65,6 @@ namespace SolidLab.DiscordBot.Sound
         {
             try
             {
-                _playerStatus.Status = InternalStatus.Playing;
-
                 IDownloadAudio selectedDownloader = null;
                 switch (type)
                 {
@@ -81,6 +79,9 @@ namespace SolidLab.DiscordBot.Sound
                 if (selectedDownloader != null)
                 {
                     var audioData = await selectedDownloader.GetAudioStream((string)sound).ConfigureAwait(false);
+
+                    audioData.CreatorId = user.Id;
+                    _playerStatus.PlayingItem = audioData;
 
                     var byteBuffer = DiscordEncode(audioData.FileStream); // TODO I think it will always be a string
                     await SendEncoded(byteBuffer, _playerStatus);
@@ -122,6 +123,7 @@ namespace SolidLab.DiscordBot.Sound
         {
             using (var mp3Reader = new Mp3FileReader(inputStream))
             {
+                _playerStatus.PlayingItem.Duration = mp3Reader.TotalTime;
                 using (var resampler = new MediaFoundationResampler(mp3Reader, _settings.WaveFormat))
                 {
                     resampler.ResamplerQuality = 60;
@@ -145,12 +147,20 @@ namespace SolidLab.DiscordBot.Sound
             }
         }
 
-        private async Task SendEncoded(IEnumerable<byte[]> buffer, PlayerStatus status)
+        private async Task SendEncoded(IList<byte[]> buffer, PlayerStatus status)
         {
+            while (_playerStatus.Status != InternalStatus.Idle)
+            {
+                Console.WriteLine("Waiting until current song finishes");
+                await Task.Delay(1);
+            }
             try
             {
+                _playerStatus.Status = InternalStatus.Playing;
+                _playerStatus.ElapsedPercentage = 0;
+                var chunkValue = 100d / buffer.Count;
                 // TODO disconnected channel throw
-                foreach (var chunk in buffer.ToList())
+                foreach (var chunk in buffer)
                 {
                     while (status.Status == InternalStatus.Paused)
                     {
@@ -164,6 +174,7 @@ namespace SolidLab.DiscordBot.Sound
                     _audioClient.VoiceSocket.SendHeartbeat();
 
                     _audioClient.Send(chunk, 0, _settings.BlockSize);
+                    _playerStatus.ElapsedPercentage += chunkValue;
                 }
                 _audioClient.Wait();
             }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using MediaToolkit.Model;
 using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
@@ -18,13 +19,19 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task<AudioItem> GetAudioStream(string link)
         {
-            var filename = GetSoundTitle(link);
-            var fileLocation = await DownloadFile(link, filename);
+            var fileName = GetSoundTitle(link);
+            
+            foreach (var invalidFileNameChar in Path.GetInvalidFileNameChars())
+            {
+                fileName = fileName.Replace(invalidFileNameChar.ToString(), "");
+            }
+
+            var fileLocation = await DownloadFile(link, fileName);
 
             return new AudioItem
             {
                 FileStream = File.OpenRead(fileLocation),
-                SongTitle = filename,
+                SongTitle = fileName,
                 Link = link,
                 Mp3Path = fileLocation,
                 Mp4Path = null

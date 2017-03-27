@@ -3,6 +3,8 @@
     public class PlayerStatus
     {
         public InternalStatus Status { get; set; }
+        public double ElapsedPercentage { get; set; }
+        public AudioItem PlayingItem { get; set; }
         public string StatusMessage { get; set; }
     }
 
