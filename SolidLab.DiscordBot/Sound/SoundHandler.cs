@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using Discord.Commands;
 using SolidLab.DiscordBot.Sound.Models;
@@ -22,15 +21,15 @@ namespace SolidLab.DiscordBot.Sound
                 .Parameter("SoundName", ParameterType.Multiple)
                 .Alias("sd")
                 .Description("Play a sound (If found!)")
-                .Do(async e => await ProcessPlayEvent(e));
+                .Do(async e => await ProcessPlayEvent(e).ConfigureAwait(false));
 
             cmdService.CreateCommand("pause")
                 .Description("Pauses music")
-                .Do(e => _soundService.Pause(e.Channel));
+                .Do(async e => await _soundService.Pause(e.Channel).ConfigureAwait(false));
             
             cmdService.CreateCommand("resume")
                 .Description("Resumes music")
-                .Do(e => _soundService.Resume(e.Channel));
+                .Do(async e => await _soundService.Resume(e.Channel).ConfigureAwait(false));
             
             cmdService.CreateCommand("join")
                 .Parameter("ChannelName", ParameterType.Multiple)
@@ -43,24 +42,24 @@ namespace SolidLab.DiscordBot.Sound
                         var channel = e.Server.VoiceChannels.FirstOrDefault(c => c.Name == channelName);
                         if (channel != null)
                         {
-                            await _soundService.Join(channel);
+                            await _soundService.Join(channel).ConfigureAwait(false);
                         }
                         else
                         {
-                            await e.Channel.SendMessage("Channel not found");
+                            await e.Channel.SendMessage("Channel not found").ConfigureAwait(false);
                             return;
                         }
                     }
                     if (e.User.VoiceChannel == null)
-                        await e.Channel.SendMessage("You need to specify a channel for me to join!");
-                    await _soundService.Join(e.User.VoiceChannel);
+                        await e.Channel.SendMessage("You need to specify a channel for me to join!").ConfigureAwait(false);
+                    await _soundService.Join(e.User.VoiceChannel).ConfigureAwait(false);
                 });
 
             cmdService.CreateCommand("disconnect")
                 .Description("Leaves the current voice channel")
                 .Do(async e =>
                 {
-                    await _soundService.Disconnect();
+                    await _soundService.Disconnect().ConfigureAwait(false);
                 });
 
             cmdService.CreateGroup("sound", s =>
@@ -76,11 +75,11 @@ namespace SolidLab.DiscordBot.Sound
         public async Task ProcessPlayEvent(CommandEventArgs ev)
         {
             if (ev.User.VoiceChannel.Id != _soundService.GetCurrentChannel()?.Id)
-                await ev.Channel.SendMessage("You must be in a voice channel to use this command!");
+                await ev.Channel.SendMessage("You must be in a voice channel to use this command!").ConfigureAwait(false);
 
             var soundName = ev.GetArg("SoundName");
             
-            await _soundService.Play(ev.User.VoiceChannel, ev.User, soundName, DetectSoundType(soundName));
+            await _soundService.Play(ev.User.VoiceChannel, ev.User, soundName, DetectSoundType(soundName)).ConfigureAwait(false);
         }
 
         private SoundRequestType DetectSoundType(string soundName)

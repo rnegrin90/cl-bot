@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Configuration;
+using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using SolidLab.DiscordBot.Events;
@@ -30,9 +31,9 @@ namespace SolidLab.DiscordBot
             _returnValue = 0;
         }
 
-        public async void Run()
+        public async Task Run()
         {
-            Console.WriteLine("Running");
+            Console.WriteLine("Loading");
             try
             {
                 _client.UsingCommands(c =>
@@ -42,8 +43,11 @@ namespace SolidLab.DiscordBot
                 });
                 
                 var cmdService = _client.GetService<CommandService>();
+                Console.WriteLine("Creating commands...");
                 _soundHandler.SetUpCommands(cmdService);
+                Console.WriteLine("Setting up audio commands");
                 _chatHandler.SetUpCommands(cmdService);
+                Console.WriteLine("Setting up chat commands");
                 cmdService.CreateCommand("restart")
                     .Do(e =>
                     {
@@ -51,18 +55,26 @@ namespace SolidLab.DiscordBot
                         _returnValue = 1;
                     });
 
+                Console.WriteLine("Wiring events");
                 _client.UserUpdated += _userEventHandler.EventGenerated;
                 _client.MessageReceived += _chatEventHandler.EventGenerated;
                 
                 await _client
                     .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)
                     .ConfigureAwait(false);
+
+                Console.WriteLine("Client started");
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 throw;
             }
+        }
+
+        public async Task Stop()
+        {
+            await _client.Disconnect().ConfigureAwait(false);
         }
     }
 }

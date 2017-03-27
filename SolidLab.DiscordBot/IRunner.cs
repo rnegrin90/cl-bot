@@ -4,6 +4,7 @@ namespace SolidLab.DiscordBot
 {
     public interface IRunner
     {
-        void Run();
+        Task Run();
+        Task Stop();
     }
 }

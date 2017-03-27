@@ -44,14 +44,22 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task Join(Channel channel)
         {
-            _audioClient = await _audioService.Join(channel);
+            try
+            {
+                _audioClient = await _audioService.Join(channel).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         public async Task Disconnect()
         {
             if (_audioClient != null)
             {
-                await _audioService.Leave(_audioClient.Channel);
+                await _audioService.Leave(_audioClient.Channel).ConfigureAwait(false);
                 _audioClient = null;
             }
         }
@@ -83,8 +91,7 @@ namespace SolidLab.DiscordBot.Sound
                     audioData.CreatorId = user.Id;
                     _playerStatus.PlayingItem = audioData;
 
-                    var byteBuffer = DiscordEncode(audioData.FileStream); // TODO I think it will always be a string
-                    await SendEncoded(byteBuffer, _playerStatus);
+                    await DiscordEncode(audioData.FileStream).ConfigureAwait(false); // TODO I think it will always be a string
                 }
 
                 _playerStatus.Status = InternalStatus.Idle;
@@ -100,7 +107,7 @@ namespace SolidLab.DiscordBot.Sound
         {
             if (_playerStatus.Status != InternalStatus.Playing)
             {
-                await channel.SendMessage("There is nothing playing right now.");
+                await channel.SendMessage("There is nothing playing right now.").ConfigureAwait(false);
             }
             _playerStatus.Status = InternalStatus.Paused;
         }
@@ -109,17 +116,12 @@ namespace SolidLab.DiscordBot.Sound
         {
             if (_playerStatus.Status != InternalStatus.Paused)
             {
-                await channel.SendMessage("Can't resume, player is not Paused");
+                await channel.SendMessage("Can't resume, player is not Paused").ConfigureAwait(false);
             }
             _playerStatus.Status = InternalStatus.Playing;
         }
 
-        private async Task<Stream> ProcessMp3File(string path)
-        {
-            return await Task.Run(() => File.OpenRead(path));
-        }
-
-        private IList<byte[]> DiscordEncode(Stream inputStream)
+        private async Task DiscordEncode(Stream inputStream)
         {
             using (var mp3Reader = new Mp3FileReader(inputStream))
             {
@@ -130,7 +132,13 @@ namespace SolidLab.DiscordBot.Sound
                     var buffer = new byte[_settings.BlockSize];
                     int byteCount;
 
-                    var soundChunks = new List<byte[]>();
+                    while (_playerStatus.Status != InternalStatus.Idle)
+                    {
+                        Console.WriteLine("Waiting until current song finishes");
+                        await Task.Delay(1);
+                    }
+
+                    _playerStatus.Status = InternalStatus.Playing;
                     while ((byteCount = resampler.Read(buffer, 0, _settings.BlockSize)) > 0)
                     {
                         if (byteCount < _settings.BlockSize)
@@ -138,11 +146,22 @@ namespace SolidLab.DiscordBot.Sound
                             for (var i = byteCount; i < _settings.BlockSize; i++)
                                 buffer[i] = 0;
                         }
-                        soundChunks.Add(buffer);
-                        buffer = new byte[_settings.BlockSize];
+
+                        while (_playerStatus.Status == InternalStatus.Paused)
+                        {
+                            await Task.Delay(1).ConfigureAwait(false);
+                            _audioClient.VoiceSocket.SendHeartbeat();
+                        }
+
+                        if (_playerStatus.Status == InternalStatus.Stopped)
+                            return;
+
+                        _audioClient.VoiceSocket.SendHeartbeat();
+
+                        _audioClient.Send(buffer, 0, _settings.BlockSize);
                     }
 
-                    return soundChunks;
+                    _audioClient.Wait();
                 }
             }
         }
@@ -152,7 +171,7 @@ namespace SolidLab.DiscordBot.Sound
             while (_playerStatus.Status != InternalStatus.Idle)
             {
                 Console.WriteLine("Waiting until current song finishes");
-                await Task.Delay(1);
+                await Task.Delay(1).ConfigureAwait(false);
             }
             try
             {
