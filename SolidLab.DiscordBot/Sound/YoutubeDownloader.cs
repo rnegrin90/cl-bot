@@ -63,13 +63,25 @@ namespace SolidLab.DiscordBot.Sound
             {
                 FileStream = await ConvertToMp3(_soundCache, fileName, video.VideoExtension),
                 Link = link,
-                Mp4Path = Path.Combine(_soundCache, fileName + video.VideoExtension),
                 Mp3Path = Path.Combine(_soundCache, fileName + ".mp3"),
-                SongTitle = video.Title 
+                SongTitle = video.Title,
+                Duration = GetDuration(Path.Combine(_soundCache, fileName + ".mp3"))
             };
         }
 
-        private async Task<Stream> ConvertToMp3(string path, string videoName, string extension)
+        private TimeSpan GetDuration(string filePath)
+        {
+            var file = new MediaFile { Filename = filePath };
+
+            using (var engine = new Engine())
+            {
+                engine.GetMetadata(file);
+            }
+
+            return file.Metadata.Duration;
+        }
+
+        private async Task<FileStream> ConvertToMp3(string path, string videoName, string extension)
         {
             var inputFile = new MediaFile { Filename = Path.Combine(path, videoName + extension) };
             var outputFile = new MediaFile { Filename = Path.Combine(path, videoName + ".mp3") };

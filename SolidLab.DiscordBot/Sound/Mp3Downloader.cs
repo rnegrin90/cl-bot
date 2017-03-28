@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using MediaToolkit.Model;
 using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
@@ -33,8 +32,7 @@ namespace SolidLab.DiscordBot.Sound
                 FileStream = File.OpenRead(fileLocation),
                 SongTitle = fileName,
                 Link = link,
-                Mp3Path = fileLocation,
-                Mp4Path = null
+                Mp3Path = fileLocation
             };
         }
 

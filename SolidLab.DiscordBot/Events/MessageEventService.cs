@@ -7,6 +7,7 @@ namespace SolidLab.DiscordBot.Events
     {
         public void EventGenerated(object obj, EventArgs ev)
         {
+            Console.WriteLine("Chat input detected");
             var discordEvent = (MessageEventArgs) ev;
             if (discordEvent.Message.Text.ToLower() == "here come dat boi")
             {

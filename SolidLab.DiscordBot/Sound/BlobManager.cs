@@ -17,18 +17,18 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task StoreBlob(Guid blobId, BlobType type, Stream payload)
         {
-            var container = _blobClient.GetContainerReference(type.ToString());
-            await container.CreateIfNotExistsAsync();
+            var container = _blobClient.GetContainerReference(type.ToString().ToLower());
+            await container.CreateIfNotExistsAsync().ConfigureAwait(false);
             var blob = container.GetBlockBlobReference(blobId.ToString());
-            await blob.UploadFromStreamAsync(payload);
+            await blob.UploadFromStreamAsync(payload).ConfigureAwait(false);
         }
 
         public async Task<Stream> GetBlob(Guid blobId, BlobType type)
         {
-            var container = _blobClient.GetContainerReference(type.ToString());
+            var container = _blobClient.GetContainerReference(type.ToString().ToLower());
             var blob = container.GetBlockBlobReference(blobId.ToString());
             var downloadedStream = new MemoryStream();
-            await blob.DownloadToStreamAsync(downloadedStream);
+            await blob.DownloadToStreamAsync(downloadedStream).ConfigureAwait(false);
             return downloadedStream;
         }
     }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Audio;
@@ -11,29 +10,25 @@ using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
 {
-    public class SoundService : IMakeSounds
+    public class PlayerService : IMakeSounds
     {
-        private readonly IDownloadAudio _youtubeDownloader;
-        private readonly IDownloadAudio _mp3Downloader;
-        private readonly ISoundsRepository _soundsRepo;
+        private readonly DiscordClient _discordClient;
         private IAudioClient _audioClient;
-        private readonly AudioService _audioService;
+        private AudioService _audioService;
         private readonly PlayerSettings _settings;
         private readonly PlayerStatus _playerStatus;
         private readonly Queue<CommandQueueElement> _commandQueue;
         
-        public SoundService(
-            DiscordClient discordClient, 
-            IDownloadAudio youtubeDownloader,
-            IDownloadAudio mp3Downloader)
+        public PlayerService(DiscordClient discordClient)
         {
-            _youtubeDownloader = youtubeDownloader;
-            _mp3Downloader = mp3Downloader;
+            _discordClient = discordClient;
             _playerStatus = new PlayerStatus
             {
                 Status = InternalStatus.Starting,
                 StatusMessage = string.Empty
             };
+
+            discordClient.UsingAudio(a => a.Mode = AudioMode.Outgoing);
             _audioService = discordClient.GetService<AudioService>();
 
             _settings = new PlayerSettings(new WaveFormat(48000, 16, _audioService.Config.Channels));
@@ -47,10 +42,19 @@ namespace SolidLab.DiscordBot.Sound
             try
             {
                 _audioClient = await _audioService.Join(channel).ConfigureAwait(false);
+                await Task.Run(async () =>
+                {
+                    while (_audioClient != null)
+                    {
+                        _audioClient.VoiceSocket.SendHeartbeat();
+                        await Task.Delay(100);
+                    }
+                });
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                _audioService = _discordClient.GetService<AudioService>();
                 throw;
             }
         }
@@ -69,35 +73,19 @@ namespace SolidLab.DiscordBot.Sound
             return _audioClient?.Channel;
         }
 
-        public async Task Play(Channel channel, User user, object sound, SoundRequestType type)
+        public async Task Play(Channel channel, User user, AudioItem audio)
         {
             try
             {
-                IDownloadAudio selectedDownloader = null;
-                switch (type)
-                {
-                    case SoundRequestType.LinkMp3:
-                        selectedDownloader = _mp3Downloader;
-                        break;
-                    case SoundRequestType.Youtube:
-                        selectedDownloader = _youtubeDownloader;
-                        break;
-                }
+                _playerStatus.PlayingItem = audio;
 
-                if (selectedDownloader != null)
-                {
-                    var audioData = await selectedDownloader.GetAudioStream((string)sound).ConfigureAwait(false);
-
-                    audioData.CreatorId = user.Id;
-                    _playerStatus.PlayingItem = audioData;
-
-                    await DiscordEncode(audioData.FileStream).ConfigureAwait(false); // TODO I think it will always be a string
-                }
+                await StreamToDiscord(audio.FileStream).ConfigureAwait(false);
 
                 _playerStatus.Status = InternalStatus.Idle;
             }
             catch (Exception e)
             {
+                _playerStatus.Status = InternalStatus.Idle;
                 Console.WriteLine(e);
                 throw;
             }
@@ -105,6 +93,7 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task Pause(Channel channel)
         {
+            Console.WriteLine("Pausing player");
             if (_playerStatus.Status != InternalStatus.Playing)
             {
                 await channel.SendMessage("There is nothing playing right now.").ConfigureAwait(false);
@@ -114,6 +103,7 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task Resume(Channel channel)
         {
+            Console.WriteLine("Resuming player");
             if (_playerStatus.Status != InternalStatus.Paused)
             {
                 await channel.SendMessage("Can't resume, player is not Paused").ConfigureAwait(false);
@@ -121,26 +111,29 @@ namespace SolidLab.DiscordBot.Sound
             _playerStatus.Status = InternalStatus.Playing;
         }
 
-        private async Task DiscordEncode(Stream inputStream)
+        private async Task StreamToDiscord(Stream inputStream)
         {
             using (var mp3Reader = new Mp3FileReader(inputStream))
             {
                 _playerStatus.PlayingItem.Duration = mp3Reader.TotalTime;
-                using (var resampler = new MediaFoundationResampler(mp3Reader, _settings.WaveFormat))
+                var waveChannel32 = new WaveChannel32(mp3Reader);
+                using (var resampler = new MediaFoundationResampler(waveChannel32, _settings.WaveFormat))
                 {
                     resampler.ResamplerQuality = 60;
                     var buffer = new byte[_settings.BlockSize];
                     int byteCount;
-
+                    
                     while (_playerStatus.Status != InternalStatus.Idle)
                     {
                         Console.WriteLine("Waiting until current song finishes");
                         await Task.Delay(1);
                     }
-
+                    
                     _playerStatus.Status = InternalStatus.Playing;
                     while ((byteCount = resampler.Read(buffer, 0, _settings.BlockSize)) > 0)
                     {
+                        waveChannel32.Volume = _settings.Volume;
+
                         if (byteCount < _settings.BlockSize)
                         {
                             for (var i = byteCount; i < _settings.BlockSize; i++)
@@ -155,9 +148,7 @@ namespace SolidLab.DiscordBot.Sound
 
                         if (_playerStatus.Status == InternalStatus.Stopped)
                             return;
-
-                        _audioClient.VoiceSocket.SendHeartbeat();
-
+                        
                         _audioClient.Send(buffer, 0, _settings.BlockSize);
                     }
 
@@ -200,6 +191,23 @@ namespace SolidLab.DiscordBot.Sound
             catch (Exception e)
             {
                 Console.WriteLine(e);
+            }
+        }
+
+        public int GetCurrentVolume()
+        {
+            return (int) (_settings.Volume * 100);
+        }
+
+        public void SetVolume(int newVolume)
+        {
+            if (newVolume >= 0 && newVolume <= 100)
+            {
+                _settings.Volume = newVolume / 100f;
+            }
+            else
+            {
+                throw new Exception("Invalid value");
             }
         }
     }

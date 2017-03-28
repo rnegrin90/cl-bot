@@ -21,13 +21,6 @@ namespace SolidLab.DiscordBot
                     .LifestyleSingleton()
             );
 
-            var client = container.Resolve<DiscordClient>();
-
-            client.UsingAudio(x => // Opens an AudioConfigBuilder so we can configure our AudioService
-            {
-                x.Mode = AudioMode.Outgoing; // Tells the AudioService that we will only be sending audio
-            });
-
             container.Register(
                 Component
                     .For<IDownloadAudio>()
@@ -44,17 +37,21 @@ namespace SolidLab.DiscordBot
 
                 Component
                     .For<IMakeSounds>()
-                    .ImplementedBy<SoundService>()
-                    .DependsOn(Dependency.OnComponent("youtubeDownloader", "YoutubeDownloader"))
-                    .DependsOn(Dependency.OnComponent("mp3Downloader", "Mp3Downloader")),
-                
+                    .ImplementedBy<PlayerService>(),
+
                 Component
                     .For<CloudStorageAccount>()
                     .UsingFactoryMethod(() => CloudStorageAccount.Parse(ConfigurationManager.AppSettings.Get("BlobStorage:ConnectionString"))),
 
                 Component
+                    .For<IManageBlob>()
+                    .ImplementedBy<BlobManager>(),
+
+                Component
                     .For<ISoundsRepository>()
-                    .ImplementedBy<SoundsRepository>(),
+                    .ImplementedBy<SoundsRepository>()
+                    .DependsOn(Dependency.OnComponent("youtubeDownloader", "YoutubeDownloader"))
+                    .DependsOn(Dependency.OnComponent("mp3Downloader", "Mp3Downloader")),
 
                 Component
                     .For<IHandleEvents>()
@@ -68,8 +65,8 @@ namespace SolidLab.DiscordBot
 
                 Component
                     .For<IUseCommands>()
-                    .ImplementedBy<SoundHandler>()
-                    .Named("SoundHandler"),
+                    .ImplementedBy<SoundCommandsHandler>()
+                    .Named("SoundCommandsHandler"),
 
                 Component
                     .For<IUseCommands>()
@@ -79,7 +76,7 @@ namespace SolidLab.DiscordBot
                 Component
                     .For<IRunner>()
                     .ImplementedBy<BotRunner>()
-                    .DependsOn(Dependency.OnComponent("soundHandler", "SoundHandler"))
+                    .DependsOn(Dependency.OnComponent("soundHandler", "SoundCommandsHandler"))
                     .DependsOn(Dependency.OnComponent("chatHandler", "ChatHandler"))
                     .DependsOn(Dependency.OnComponent("userEventHandler", "EventService"))
                     .DependsOn(Dependency.OnComponent("chatEventHandler", "MessageEventService"))

@@ -113,8 +113,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="YoutubeExtractor, Version=0.10.11.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\YoutubeExtractor.0.10.11\lib\net35\YoutubeExtractor.dll</HintPath>
-      <Private>True</Private>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>TempResources\YoutubeExtractor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -142,9 +142,9 @@
     <Compile Include="Sound\Models\PlayerStatus.cs" />
     <Compile Include="Sound\Models\PlayerSettings.cs" />
     <Compile Include="Sound\Mp3Downloader.cs" />
-    <Compile Include="Sound\SoundService.cs" />
+    <Compile Include="Sound\PlayerService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
-    <Compile Include="Sound\SoundHandler.cs" />
+    <Compile Include="Sound\SoundCommandsHandler.cs" />
     <Compile Include="Sound\Models\UserGreeting.cs" />
     <Compile Include="Sound\Models\SoundQuality.cs" />
     <Compile Include="Sound\SoundsRepository.cs" />
@@ -168,6 +168,7 @@
     <Content Include="TempResources\AIRHORN.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="TempResources\YoutubeExtractor.dll" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

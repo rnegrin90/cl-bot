@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using SolidLab.DiscordBot.Events;
 
@@ -14,7 +15,6 @@ namespace SolidLab.DiscordBot
         private readonly IUseCommands _chatHandler;
         private readonly IHandleEvents _userEventHandler;
         private readonly IHandleEvents _chatEventHandler;
-        private int _returnValue;
 
         public BotRunner(
             DiscordClient client, 
@@ -28,7 +28,6 @@ namespace SolidLab.DiscordBot
             _chatHandler = chatHandler;
             _userEventHandler = userEventHandler;
             _chatEventHandler = chatEventHandler;
-            _returnValue = 0;
         }
 
         public async Task Run()
@@ -48,16 +47,10 @@ namespace SolidLab.DiscordBot
                 Console.WriteLine("Setting up audio commands");
                 _chatHandler.SetUpCommands(cmdService);
                 Console.WriteLine("Setting up chat commands");
-                cmdService.CreateCommand("restart")
-                    .Do(e =>
-                    {
-                        _client.Disconnect();
-                        _returnValue = 1;
-                    });
 
                 Console.WriteLine("Wiring events");
                 _client.UserUpdated += _userEventHandler.EventGenerated;
-                _client.MessageReceived += _chatEventHandler.EventGenerated;
+                //_client.MessageReceived += _chatEventHandler.EventGenerated;
                 
                 await _client
                     .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)

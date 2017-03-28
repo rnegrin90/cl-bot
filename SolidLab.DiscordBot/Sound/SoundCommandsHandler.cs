@@ -6,13 +6,15 @@ using SolidLab.DiscordBot.Sound.Models;
 
 namespace SolidLab.DiscordBot.Sound
 {
-    public class SoundHandler : IUseCommands
+    public class SoundCommandsHandler : IUseCommands
     {
         private readonly IMakeSounds _soundService;
+        private readonly ISoundsRepository _soundsRepository;
 
-        public SoundHandler(IMakeSounds soundService)
+        public SoundCommandsHandler(IMakeSounds soundService, ISoundsRepository soundsRepository)
         {
             _soundService = soundService;
+            _soundsRepository = soundsRepository;
         }
 
         public void SetUpCommands(CommandService cmdService)
@@ -30,12 +32,42 @@ namespace SolidLab.DiscordBot.Sound
             cmdService.CreateCommand("resume")
                 .Description("Resumes music")
                 .Do(async e => await _soundService.Resume(e.Channel).ConfigureAwait(false));
+
+            cmdService.CreateCommand("volume")
+                .Parameter("Volume", ParameterType.Optional)
+                .Description("Sets the bot volume")
+                .Do(async e =>
+                {
+                    if (e.Args.Length > 0)
+                    {
+                        if (int.TryParse(e.GetArg("Volume"), out int newVol))
+                        {
+                            try
+                            {
+                                _soundService.SetVolume(newVol);
+                            }
+                            catch (Exception ex)
+                            {
+                                await e.Channel.SendMessage(ex.Message).ConfigureAwait(false);
+                            }
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("Value must be a valid number").ConfigureAwait(false);
+                        }
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage($"The current volume is {_soundService.GetCurrentVolume()}").ConfigureAwait(false);
+                    }
+                });
             
             cmdService.CreateCommand("join")
                 .Parameter("ChannelName", ParameterType.Multiple)
                 .Description("Joins user current voice channel")
                 .Do(async e =>
                 {
+                    Console.WriteLine("Joining a voice channel");
                     if (e.Args.Length > 0)
                     {
                         var channelName = string.Join(" ", e.Args);
@@ -66,7 +98,6 @@ namespace SolidLab.DiscordBot.Sound
             {
                 s.CreateCommand("save")
                     .Parameter("Sound", ParameterType.Multiple)
-                    //.AddCheck() TODO add check function
                     .Description("Store a sound with its command for it to be used later on!. Usage: ~sd save {sound} {command} [alias]")
                     .Do(e => Console.WriteLine("Adding sound"));
             });
@@ -74,12 +105,16 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task ProcessPlayEvent(CommandEventArgs ev)
         {
+            Console.WriteLine($"Playing sound `{string.Join(" ", ev.Args)}`");
             if (ev.User.VoiceChannel.Id != _soundService.GetCurrentChannel()?.Id)
-                await ev.Channel.SendMessage("You must be in a voice channel to use this command!").ConfigureAwait(false);
+                await _soundService.Join(ev.User.VoiceChannel).ConfigureAwait(false);
+                //await ev.Channel.SendMessage("You must be in a voice channel to use this command!").ConfigureAwait(false);
 
             var soundName = ev.GetArg("SoundName");
+
+            var audioItem = await _soundsRepository.GetAudioItem(soundName, DetectSoundType(soundName), ev.User.Id).ConfigureAwait(false);
             
-            await _soundService.Play(ev.User.VoiceChannel, ev.User, soundName, DetectSoundType(soundName)).ConfigureAwait(false);
+            await _soundService.Play(ev.User.VoiceChannel, ev.User, audioItem).ConfigureAwait(false);
         }
 
         private SoundRequestType DetectSoundType(string soundName)
