@@ -7,7 +7,8 @@ namespace SolidLab.DiscordBot.Sound
     public interface ISoundsRepository
     {
         List<string> GetAvailableSounds();
-        UserGreeting GetPersonalisedUserGreeting(ulong userId);
+        Task<AudioItem> GetPersonalisedUserGreeting(ulong userId);
         Task<AudioItem> GetAudioItem(string sound, SoundRequestType soundType, ulong userId);
+        Task StoreSound(AudioItem data, SoundUse usage);
     }
 }

@@ -36,31 +36,7 @@ namespace SolidLab.DiscordBot.Sound
             cmdService.CreateCommand("volume")
                 .Parameter("Volume", ParameterType.Optional)
                 .Description("Sets the bot volume")
-                .Do(async e =>
-                {
-                    if (e.Args.Length > 0)
-                    {
-                        if (int.TryParse(e.GetArg("Volume"), out int newVol))
-                        {
-                            try
-                            {
-                                _soundService.SetVolume(newVol);
-                            }
-                            catch (Exception ex)
-                            {
-                                await e.Channel.SendMessage(ex.Message).ConfigureAwait(false);
-                            }
-                        }
-                        else
-                        {
-                            await e.Channel.SendMessage("Value must be a valid number").ConfigureAwait(false);
-                        }
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage($"The current volume is {_soundService.GetCurrentVolume()}").ConfigureAwait(false);
-                    }
-                });
+                .Do(async e => await ProcessVolume(e).ConfigureAwait(false));
             
             cmdService.CreateCommand("join")
                 .Parameter("ChannelName", ParameterType.Multiple)
@@ -94,13 +70,50 @@ namespace SolidLab.DiscordBot.Sound
                     await _soundService.Disconnect().ConfigureAwait(false);
                 });
 
-            cmdService.CreateGroup("sound", s =>
+            cmdService.CreateGroup("set", s =>
             {
-                s.CreateCommand("save")
+                s.CreateCommand("greet")
                     .Parameter("Sound", ParameterType.Multiple)
-                    .Description("Store a sound with its command for it to be used later on!. Usage: ~sd save {sound} {command} [alias]")
-                    .Do(e => Console.WriteLine("Adding sound"));
+                    //.Description("Store a sound with its command for it to be used later on!. Usage: ~sd save {sound} {command} [alias]")
+                    .Description("Assign a sound to greet the user when it joins the channel")
+                    .Do(async e =>
+                    {
+                        Console.WriteLine($"Setting custom greeting for user {e.User.Id}");
+
+                        var param = string.Join(" ", e.Args);
+                        var audio = await _soundsRepository.GetAudioItem(param, DetectSoundType(param), e.User.Id).ConfigureAwait(false);
+
+                        Console.WriteLine($"{audio.SongTitle} set as custom greeting");
+
+                        await _soundsRepository.StoreSound(audio, SoundUse.Greeting).ConfigureAwait(false);
+                    });
             });
+        }
+
+        private async Task ProcessVolume(CommandEventArgs e)
+        {
+            if (e.Args.Length > 0)
+            {
+                if (int.TryParse(e.GetArg("Volume"), out int newVol))
+                {
+                    try
+                    {
+                        _soundService.SetVolume(newVol);
+                    }
+                    catch (Exception ex)
+                    {
+                        await e.Channel.SendMessage(ex.Message).ConfigureAwait(false);
+                    }
+                }
+                else
+                {
+                    await e.Channel.SendMessage("Value must be a valid number").ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                await e.Channel.SendMessage($"The current volume is {_soundService.GetCurrentVolume()}").ConfigureAwait(false);
+            }
         }
 
         public async Task ProcessPlayEvent(CommandEventArgs ev)
@@ -113,7 +126,9 @@ namespace SolidLab.DiscordBot.Sound
             var soundName = ev.GetArg("SoundName");
 
             var audioItem = await _soundsRepository.GetAudioItem(soundName, DetectSoundType(soundName), ev.User.Id).ConfigureAwait(false);
-            
+
+            await _soundsRepository.StoreSound(audioItem, SoundUse.StoredSound).ConfigureAwait(false);
+
             await _soundService.Play(ev.User.VoiceChannel, ev.User, audioItem).ConfigureAwait(false);
         }
 

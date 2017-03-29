@@ -145,7 +145,6 @@
     <Compile Include="Sound\PlayerService.cs" />
     <Compile Include="Sound\Models\SoundRequestType.cs" />
     <Compile Include="Sound\SoundCommandsHandler.cs" />
-    <Compile Include="Sound\Models\UserGreeting.cs" />
     <Compile Include="Sound\Models\SoundQuality.cs" />
     <Compile Include="Sound\SoundsRepository.cs" />
     <Compile Include="Sound\Models\AudioItem.cs" />

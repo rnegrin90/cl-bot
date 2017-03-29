@@ -42,23 +42,47 @@ namespace SolidLab.DiscordBot.Sound
              * Control characters from U+007F to U+009F
              */
 
-            var soundEntity = new SoundEntity
+            var retrieve = TableOperation.Retrieve<SoundEntity>(data.SoundType.ToString(), data.SongTitle);
+
+            var result = await _soundTable.ExecuteAsync(retrieve).ConfigureAwait(false);
+
+            if (result == null)
             {
-                Id = Guid.NewGuid(),
-                PartitionKey = data.SoundType.ToString(),
-                RowKey = data.SongTitle,
-                LastUsed = DateTime.UtcNow,
-                SoundUse = (int) usage,
-                Enabled = true,
-                OwnerId = data.CreatorId,
-                Tags = data.Link,
-                Duration = data.Duration.ToString("c")
-            };
 
-            var operation = TableOperation.Insert(soundEntity);
-            await _soundTable.ExecuteAsync(operation).ConfigureAwait(false);
+                var soundEntity = new SoundEntity
+                {
+                    Id = Guid.NewGuid(),
+                    PartitionKey = data.SoundType.ToString(),
+                    RowKey = data.SongTitle,
+                    LastUsed = DateTime.UtcNow,
+                    SoundUse = (int) usage,
+                    Enabled = true,
+                    OwnerId = (long) data.CreatorId,
+                    Tags = data.Link,
+                    Duration = data.Duration.ToString("c")
+                };
 
-            await _blobManager.StoreBlob(soundEntity.Id, BlobType.Mp3, data.FileStream).ConfigureAwait(false);
+                var operation = TableOperation.Insert(soundEntity);
+                await _soundTable.ExecuteAsync(operation).ConfigureAwait(false);
+
+                await _blobManager.StoreBlob(soundEntity.Id, BlobType.Mp3, data.FileStream).ConfigureAwait(false);
+            }
+            else if (usage == SoundUse.Greeting || usage == SoundUse.Dismissal)
+            {
+                var sound = result.Result as SoundEntity;
+
+                if (sound != null)
+                {
+                    sound.LastUsed = DateTime.UtcNow;
+                    sound.OwnerId = (long) data.CreatorId;
+                    sound.Tags = data.Link;
+                    sound.Duration = data.Duration.ToString("c");
+
+                    var update = TableOperation.Replace(sound);
+
+                    await _soundTable.ExecuteAsync(update).ConfigureAwait(false);
+                }
+            }
         }
 
         public List<string> GetAvailableSounds()
@@ -66,9 +90,23 @@ namespace SolidLab.DiscordBot.Sound
             throw new System.NotImplementedException();
         }
 
-        public UserGreeting GetPersonalisedUserGreeting(ulong userId)
+        public async Task<AudioItem> GetPersonalisedUserGreeting(ulong userId)
         {
-            throw new System.NotImplementedException();
+            var tableQuery = new TableQuery<SoundEntity>().Where(TableQuery.GenerateFilterConditionForInt("SoundUse", QueryComparisons.Equal, (int) SoundUse.Greeting));
+
+            foreach (var soundEntity in _soundTable.ExecuteQuery(tableQuery))
+            {
+                if (soundEntity.OwnerId == (long) userId)
+                {
+                    soundEntity.LastUsed = DateTime.UtcNow;
+                    var updateOperation = TableOperation.Replace(soundEntity);
+                    await _soundTable.ExecuteAsync(updateOperation);
+
+                    return await GetAudioFromAzure(soundEntity).ConfigureAwait(false);
+                }
+            }
+
+            return null;
         }
 
         public async Task<AudioItem> GetAudioItem(string sound, SoundRequestType soundType, ulong userId)
@@ -101,7 +139,7 @@ namespace SolidLab.DiscordBot.Sound
 
             return new AudioItem
             {
-                CreatorId = soundEntity.OwnerId,
+                CreatorId = (ulong) soundEntity.OwnerId,
                 FileStream = audioStream,
                 Link = soundEntity.Tags,
                 SongTitle = soundEntity.RowKey,
@@ -128,7 +166,6 @@ namespace SolidLab.DiscordBot.Sound
 
                 audioData.CreatorId = userId;
                 audioData.SoundType = soundType;
-                await StoreSound(audioData, SoundUse.StoredSound).ConfigureAwait(false);
 
                 audioData.FileStream.Position = 0;
 
@@ -143,7 +180,7 @@ namespace SolidLab.DiscordBot.Sound
     {
         public Guid Id { get; set; }
         public string Tags { get; set; }
-        public ulong OwnerId { get; set; }
+        public long OwnerId { get; set; }
         public int SoundUse { get; set; }
         public bool Enabled { get; set; }
         public DateTime LastUsed { get; set; }

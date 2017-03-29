@@ -77,6 +77,7 @@ namespace SolidLab.DiscordBot.Sound
         {
             try
             {
+                audio.FileStream.Position = 0;
                 _playerStatus.PlayingItem = audio;
 
                 await StreamToDiscord(audio.FileStream).ConfigureAwait(false);
@@ -130,7 +131,7 @@ namespace SolidLab.DiscordBot.Sound
                     }
                     
                     _playerStatus.Status = InternalStatus.Playing;
-                    while ((byteCount = resampler.Read(buffer, 0, _settings.BlockSize)) > 0)
+                    while ((byteCount = resampler.Read(buffer, 0, _settings.BlockSize)) > 0 && waveChannel32.Position <= waveChannel32.Length)
                     {
                         waveChannel32.Volume = _settings.Volume;
 
