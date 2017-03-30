@@ -85,6 +85,7 @@ namespace SolidLab.DiscordBot.Sound
 
                         Console.WriteLine($"{audio.SongTitle} set as custom greeting");
 
+                        audio.SongTitle += "-" + e.User.Id;
                         await _soundsRepository.StoreSound(audio, SoundUse.Greeting).ConfigureAwait(false);
                     });
             });

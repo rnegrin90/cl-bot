@@ -31,6 +31,13 @@ namespace SolidLab.DiscordBot.Sound
             await blob.DownloadToStreamAsync(downloadedStream).ConfigureAwait(false);
             return downloadedStream;
         }
+
+        public async Task DeleteBlob(Guid blobId, BlobType type)
+        {
+            var container = _blobClient.GetContainerReference(type.ToString().ToLower());
+            var blob = container.GetBlockBlobReference(blobId.ToString());
+            await blob.DeleteAsync().ConfigureAwait(false);
+        }
     }
 
     public enum BlobType
@@ -43,5 +50,6 @@ namespace SolidLab.DiscordBot.Sound
     {
         Task StoreBlob(Guid blobId, BlobType type, Stream payload);
         Task<Stream> GetBlob(Guid blobId, BlobType type);
+        Task DeleteBlob(Guid blobId, BlobType type);
     }
 }

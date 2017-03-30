@@ -28,7 +28,7 @@ namespace SolidLab.DiscordBot
 
         private static bool Handler(CtrlType sig)
         {
-            _discordRunner.Stop();
+            _discordRunner.Stop().Wait();
             return true;
         }
 

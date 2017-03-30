@@ -27,10 +27,6 @@ namespace SolidLab.DiscordBot.Events
                     Task.Run(() => _soundService.Play(discordEvent.After.VoiceChannel, discordEvent.After, audio));
                 }
             }
-            //    _soundService.Play(ev.After.VoiceChannel, ev.After, "AIRHORN", SoundRequestType.Mp3File);
-            //_soundsRepository.GetPersonalisedUserGreeting(ev.User.Id);
-            //if (_soundsRepository.GetPersonalisedUserGreeting(ev.User.Id) != null)
-            //    _soundService.Play(, "");
         }
     }
 }

@@ -30,7 +30,7 @@ namespace SolidLab.DiscordBot
             _chatEventHandler = chatEventHandler;
         }
 
-        public async Task Run()
+        public void Run()
         {
             Console.WriteLine("Loading");
             try
@@ -52,10 +52,24 @@ namespace SolidLab.DiscordBot
                 _client.UserUpdated += _userEventHandler.EventGenerated;
                 //_client.MessageReceived += _chatEventHandler.EventGenerated;
                 
-                await _client
-                    .Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot)
-                    .ConfigureAwait(false);
-
+                _client.ExecuteAndWait(async () =>
+                {
+                    while (true)
+                    {
+                        try
+                        {
+                            await _client.Connect(ConfigurationManager.AppSettings["DiscordBot:Token"], TokenType.Bot);
+                            Console.WriteLine("Connected to Discord");
+                            break;
+                        }
+                        catch
+                        {
+                            Console.WriteLine("Conneting...");
+                            await Task.Delay(3000);
+                        }
+                    }
+                });
+                
                 Console.WriteLine("Client started");
             }
             catch (Exception e)
