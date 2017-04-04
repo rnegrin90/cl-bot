@@ -78,13 +78,14 @@ namespace SolidLab.DiscordBot.Sound
                     Enabled = true,
                     OwnerId = (long) data.CreatorId,
                     Tags = data.Link,
-                    Duration = data.Duration.ToString("c")
+                    Duration = data.Duration.ToString("c"),
+                    BlobId = Guid.NewGuid()
                 };
 
                 var operation = TableOperation.Insert(soundEntity);
                 await _soundTable.ExecuteAsync(operation).ConfigureAwait(false);
 
-                await _blobManager.StoreBlob(Guid.Parse(soundEntity.RowKey), BlobType.Mp3, data.FileStream).ConfigureAwait(false);
+                await _blobManager.StoreBlob(soundEntity.BlobId, BlobType.Mp3, data.FileStream).ConfigureAwait(false);
             }
         }
 
@@ -188,6 +189,7 @@ namespace SolidLab.DiscordBot.Sound
         public bool Enabled { get; set; }
         public DateTime LastUsed { get; set; }
         public string Duration { get; set; }
+        public Guid BlobId { get; set; }
 
         public SoundEntity() { }
     }

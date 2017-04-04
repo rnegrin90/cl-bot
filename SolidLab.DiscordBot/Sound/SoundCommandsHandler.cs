@@ -119,17 +119,25 @@ namespace SolidLab.DiscordBot.Sound
 
         public async Task ProcessPlayEvent(CommandEventArgs ev)
         {
-            Console.WriteLine($"Playing sound `{string.Join(" ", ev.Args)}`");
+            if (ev.Args.Length == 0)
+            {
+                await ev.Channel.SendMessage("You need to give me something to play!");
+                return;
+            }
+
+            Console.WriteLine($"Starting to play: `{string.Join(" ", ev.Args)}`");
             if (ev.User.VoiceChannel.Id != _soundService.GetCurrentChannel()?.Id)
                 await _soundService.Join(ev.User.VoiceChannel).ConfigureAwait(false);
                 //await ev.Channel.SendMessage("You must be in a voice channel to use this command!").ConfigureAwait(false);
 
             var soundName = ev.GetArg("SoundName");
-
+            
             var audioItem = await _soundsRepository.GetAudioItem(soundName, DetectSoundType(soundName), ev.User.Id).ConfigureAwait(false);
 
+            Console.WriteLine($"Storing sound: `{audioItem.Link}`");
             await _soundsRepository.StoreSound(audioItem, SoundUse.StoredSound).ConfigureAwait(false);
 
+            Console.WriteLine($"Playing: `{audioItem.Link}`");
             await _soundService.Play(ev.User.VoiceChannel, ev.User, audioItem).ConfigureAwait(false);
         }
 
