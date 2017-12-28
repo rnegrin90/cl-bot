@@ -11,6 +11,9 @@ namespace SolidLab.DiscordBot.Chat
                   .Description("Rolls a random number between 0 and " + int.MaxValue)
                   .Do(e => e.Channel.SendMessage(Roll()));
         }
+
+        [Command("roll")]
+        [Summary("Rolls a random number between 0 and 65000")]
         public string Roll()
         {
             var random = new Random().Next(0, int.MaxValue);

@@ -3,7 +3,8 @@ using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
 using Discord;
-using Discord.Audio;
+using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
 using Microsoft.WindowsAzure.Storage;
 using SolidLab.DiscordBot.Chat;
 using SolidLab.DiscordBot.Events;
@@ -22,6 +23,18 @@ namespace SolidLab.DiscordBot
             );
 
             container.Register(
+                Component
+                    .For<YouTubeService>()
+                    .UsingFactoryMethod(() => new YouTubeService(new BaseClientService.Initializer
+                    {
+                        ApiKey = ConfigurationManager.AppSettings.Get("SearchService:YoutubeApiKey"),
+                        ApplicationName = "clBot"
+                    })),
+
+                Component
+                    .For<ISearchSounds>()
+                    .ImplementedBy<SoundSearchService>(),
+
                 Component
                     .For<IDownloadAudio>()
                     .ImplementedBy<YoutubeDownloader>()

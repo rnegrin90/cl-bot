@@ -65,7 +65,7 @@ namespace SolidLab.DiscordBot.Sound
 
             var result = await _soundTable.ExecuteAsync(retrieve).ConfigureAwait(false);
 
-            if (result == null)
+            if (result.Result == null)
             {
 
                 var soundEntity = new SoundEntity
@@ -134,7 +134,7 @@ namespace SolidLab.DiscordBot.Sound
 
         private async Task<AudioItem> GetAudioFromAzure(SoundEntity soundEntity)
         {
-            var audioStream = await _blobManager.GetBlob(Guid.Parse(soundEntity.RowKey), BlobType.Mp3);
+            var audioStream = await _blobManager.GetBlob(soundEntity.BlobId, BlobType.Mp3);
 
             audioStream.Position = 0;
 

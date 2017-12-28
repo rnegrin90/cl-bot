@@ -149,7 +149,8 @@ namespace SolidLab.DiscordBot.Sound
 
                         if (_playerStatus.Status == InternalStatus.Stopped)
                             return;
-                        
+
+                        _audioClient.VoiceSocket.SendHeartbeat();
                         _audioClient.Send(buffer, 0, _settings.BlockSize);
                     }
 

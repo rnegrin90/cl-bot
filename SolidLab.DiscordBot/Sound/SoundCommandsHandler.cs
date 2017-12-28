@@ -10,11 +10,13 @@ namespace SolidLab.DiscordBot.Sound
     {
         private readonly IMakeSounds _soundService;
         private readonly ISoundsRepository _soundsRepository;
+        private readonly ISearchSounds _searchService;
 
-        public SoundCommandsHandler(IMakeSounds soundService, ISoundsRepository soundsRepository)
+        public SoundCommandsHandler(IMakeSounds soundService, ISoundsRepository soundsRepository, ISearchSounds searchService)
         {
             _soundService = soundService;
             _soundsRepository = soundsRepository;
+            _searchService = searchService;
         }
 
         public void SetUpCommands(CommandService cmdService)
@@ -23,7 +25,7 @@ namespace SolidLab.DiscordBot.Sound
                 .Parameter("SoundName", ParameterType.Multiple)
                 .Alias("sd")
                 .Description("Play a sound (If found!)")
-                .Do(async e => await ProcessPlayEvent(e).ConfigureAwait(false));
+                .Do(ProcessPlayEvent);
 
             cmdService.CreateCommand("pause")
                 .Description("Pauses music")
@@ -131,6 +133,11 @@ namespace SolidLab.DiscordBot.Sound
                 //await ev.Channel.SendMessage("You must be in a voice channel to use this command!").ConfigureAwait(false);
 
             var soundName = ev.GetArg("SoundName");
+
+            if (ev.Args.Length > 1 || !IsUrl(soundName))
+            {
+                soundName = await _searchService.Search(string.Join(" ", ev.Args));
+            }
             
             var audioItem = await _soundsRepository.GetAudioItem(soundName, DetectSoundType(soundName), ev.User.Id).ConfigureAwait(false);
 
@@ -139,6 +146,12 @@ namespace SolidLab.DiscordBot.Sound
 
             Console.WriteLine($"Playing: `{audioItem.Link}`");
             await _soundService.Play(ev.User.VoiceChannel, ev.User, audioItem).ConfigureAwait(false);
+        }
+
+        private bool IsUrl(string soundName)
+        {
+            return Uri.TryCreate(soundName, UriKind.Absolute, out Uri uriResult) 
+                && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
         }
 
         private SoundRequestType DetectSoundType(string soundName)
